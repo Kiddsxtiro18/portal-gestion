@@ -1,10 +1,12 @@
-// api/insert.js
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
     // Solo permitimos peticiones POST
-    if (req.method !== 'POST') return res.status(405).send('Método no permitido');
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Método no permitido' });
+    }
 
+    // Coordenadas del proyecto
     const URL_S = 'https://gvmwdqwkcacgzkfincz.supabase.co';
     const KEY_S = 'sb_publishable_N_hTBW7We2gtuT6b9xYgAA_trx0pI_w';
     const supabase = createClient(URL_S, KEY_S);
@@ -12,8 +14,8 @@ export default async function handler(req, res) {
     try {
         const { nombre, mensaje } = req.body;
         
-        // El servidor detecta la IP automáticamente (Bypass de Ipify)
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        // Captura de IP desde las cabeceras de Vercel (Bypass total)
+        const ip = req.headers['x-forwarded-for'] || 'IP_Desconocida';
 
         const { error } = await supabase
             .from('visitas')
@@ -28,4 +30,4 @@ export default async function handler(req, res) {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
-}
+};
