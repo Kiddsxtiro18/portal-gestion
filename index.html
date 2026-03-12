@@ -6,51 +6,113 @@
     <title>Portal de Acceso Tenno</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .container { background: #252525; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 350px; text-align: center; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #444; background: #121212; color: #00f2ff; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; background: #f06d06; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #ff8c00; transform: translateY(-2px); }
-        #estado { font-size: 0.8em; margin-top: 15px; color: #888; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0d1117; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .matriz-contenedor { 
+            background: #161b22; 
+            padding: 30px; 
+            border-radius: 12px; 
+            border: 1px solid #30363d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7); 
+            width: 90%;
+            max-width: 400px; 
+            text-align: center; 
+        }
+        h2 { color: #f06d06; margin-bottom: 20px; }
+        input, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 6px; 
+            border: 1px solid #30363d; 
+            background: #010409; 
+            color: #58a6ff; 
+            box-sizing: border-box; 
+            font-size: 16px;
+        }
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 6px; 
+            background: #f06d06; 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            margin-top: 10px;
+        }
+        button:hover { 
+            background: #ff8c00; 
+            box-shadow: 0 0 15px rgba(240, 109, 6, 0.4);
+        }
+        #estado { 
+            font-size: 0.9em; 
+            margin-top: 20px; 
+            color: #8b949e; 
+            min-height: 20px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="matriz-contenedor">
     <h2>Verificación de Operador</h2>
-    <input type="text" id="nombre" placeholder="Nombre de usuario">
-    <textarea id="mensaje" placeholder="Código de transmisión" rows="3"></textarea>
-    <button id="enviar">Ingresar al Sistema</button>
+    <input type="text" id="nombre" placeholder="Alias de Operador" autocomplete="off">
+    <textarea id="mensaje" placeholder="Mensaje para el Vacío" rows="3"></textarea>
+    <button id="enviar">Iniciar Sincronización</button>
     <p id="estado"></p>
 </div>
 
 <script>
+    // Configuración de los núcleos de Supabase
     const URL_S = 'https://gvmwdqwkcacgzkfincz.supabase.co';
     const KEY_S = 'sb_publishable_N_hTBW7We2gtuT6b9xYgAA_trx0pI_w';
     const supabaseClient = supabase.createClient(URL_S, KEY_S);
 
     document.getElementById('enviar').addEventListener('click', async () => {
         const estado = document.getElementById('estado');
-        estado.innerText = "Validando credenciales...";
+        const btn = document.getElementById('enviar');
+        
+        estado.innerText = "Estableciendo conexión con el Vacío...";
+        btn.disabled = true;
 
         try {
-            // Obtención sigilosa de la IP
-            const resIp = await fetch('https://api.ipify.org?format=json');
-            const dataIp = await resIp.json();
-            const ipFinal = dataIp.ip;
+            // MANIOBRA DE DIAGNÓSTICO:
+            // Usamos un identificador fijo para saltar el firewall de la universidad
+            const ipSimulada = "Móvil_4G_Bypass"; 
 
             const n = document.getElementById('nombre').value;
             const m = document.getElementById('mensaje').value;
 
-            const { error } = await supabaseClient
+            // Transmisión directa a la tabla 'visitas'
+            const { data, error } = await supabaseClient
                 .from('visitas')
-                .insert([{ Usuario_input: n + " - " + m, User_ip: ipFinal }]);
+                .insert([{ 
+                    Usuario_input: n + " : " + m, 
+                    User_ip: ipSimulada 
+                }]);
 
             if (error) throw error;
-            estado.innerText = "Acceso concedido. Registro completado.";
+
+            estado.style.color = "#3fb950";
+            estado.innerText = "Transmisión exitosa. Rastro grabado en Supabase.";
+            
         } catch (err) {
-            estado.innerText = "Error de red: Tiempo de espera agotado.";
+            estado.style.color = "#f85149";
+            estado.innerText = "Fallo crítico en el enlace: " + err.message;
             console.error(err);
+        } finally {
+            btn.disabled = false;
         }
     });
 </script>
