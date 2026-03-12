@@ -3,130 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Acceso Tenno</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Portal de Acceso Tenno - Bypass v2</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background: #0d1117; 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
-        .contenedor-interfaz { 
-            background: #161b22; 
-            padding: 2rem; 
-            border-radius: 12px; 
+        .matriz-contenedor {
+            background: #161b22;
+            padding: 30px;
+            border-radius: 12px;
             border: 1px solid #30363d;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
             width: 90%;
-            max-width: 380px; 
-            text-align: center; 
+            max-width: 400px;
+            text-align: center;
         }
-        h2 { color: #f06d06; margin-top: 0; font-weight: 600; }
-        input, textarea { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 8px 0; 
-            border-radius: 6px; 
-            border: 1px solid #30363d; 
-            background: #010409; 
-            color: #58a6ff; 
-            box-sizing: border-box; 
+        h2 { color: #f06d06; margin-bottom: 20px; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: #010409;
+            color: #58a6ff;
+            box-sizing: border-box;
             font-size: 16px;
         }
-        button { 
-            width: 100%; 
-            padding: 14px; 
-            border: none; 
-            border-radius: 6px; 
-            background: #f06d06; 
-            color: white; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            margin-top: 15px;
-            font-size: 1rem;
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            background: #f06d06;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
         }
-        button:hover { background: #ff8c00; transform: translateY(-1px); }
+        button:hover {
+            background: #ff8c00;
+            box-shadow: 0 0 15px rgba(240, 109, 6, 0.4);
+        }
         button:disabled { background: #444; cursor: not-allowed; }
-        #estado { 
-            font-size: 0.85rem; 
-            margin-top: 1.5rem; 
-            color: #8b949e; 
-            line-height: 1.4;
-            padding: 10px;
-            border-radius: 4px;
-            background: rgba(0,0,0,0.2);
+        #estado {
+            font-size: 0.9em;
+            margin-top: 20px;
+            color: #8b949e;
+            min-height: 20px;
         }
     </style>
 </head>
 <body>
 
-<div class="contenedor-interfaz">
+<div class="matriz-contenedor">
     <h2>Verificación de Operador</h2>
     <input type="text" id="nombre" placeholder="Alias de Operador" autocomplete="off">
-    <textarea id="mensaje" placeholder="Mensaje para la base de datos" rows="3"></textarea>
+    <textarea id="mensaje" placeholder="Mensaje para el Vacío" rows="3"></textarea>
     <button id="enviar">Iniciar Sincronización</button>
-    <p id="estado">Sistema en espera...</p>
+    <p id="estado">Canal de comunicación listo.</p>
 </div>
 
 <script>
-    // Coordenadas del Vacío
-    const URL_S = 'https://gvmwdqwkcacgzkfincz.supabase.co';
-    const KEY_S = 'sb_publishable_N_hTBW7We2gtuT6b9xYgAA_trx0pI_w';
-    const supabaseClient = supabase.createClient(URL_S, KEY_S);
-
     document.getElementById('enviar').addEventListener('click', async () => {
         const estado = document.getElementById('estado');
         const btn = document.getElementById('enviar');
-        
-        estado.innerText = "Intentando conexión directa con Supabase...";
+        const n = document.getElementById('nombre').value;
+        const m = document.getElementById('mensaje').value;
+
+        if (!n || !m) {
+            estado.innerText = "Error: Faltan datos en la matriz.";
+            estado.style.color = "#f85149";
+            return;
+        }
+
+        estado.innerText = "Transmitiendo a través del túnel de Vercel...";
         estado.style.color = "#8b949e";
         btn.disabled = true;
 
         try {
-            // Recolección de entradas
-            const n = document.getElementById('nombre').value;
-            const m = document.getElementById('mensaje').value;
+            // Ya no contactamos a Supabase directamente.
+            // Enviamos la petición a nuestra propia ruta interna /api/insert.
+            const response = await fetch('/api/insert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre: n, mensaje: m })
+            });
 
-            if(!n || !m) {
-                estado.innerText = "Error: Completa todos los campos, Tenno.";
-                estado.style.color = "#f85149";
-                btn.disabled = false;
-                return;
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Fallo en el servidor.");
             }
 
-            // Maniobra sigilosa: Intentamos enviar los datos directamente.
-            // Si esto falla con "Failed to fetch", el bloqueo es a nivel de red (DNS/Firewall).
-            const { error, status } = await supabaseClient
-                .from('visitas')
-                .insert([{ 
-                    Usuario_input: `${n} - ${m}`, 
-                    User_ip: "Origen_Movil_4G" 
-                }]);
+            const resultado = await response.json();
 
-            if (error) {
-                // El servidor respondió, pero rechazó la entrada (posiblemente RLS)
-                estado.innerText = `Interferencia de Supabase: ${error.message} (Status: ${status})`;
-                estado.style.color = "#f85149";
-            } else {
-                // Éxito total
-                estado.innerText = "¡Sincronización exitosa! Datos grabados en el Vacío.";
+            if (resultado.success) {
+                estado.innerText = "¡Sincronización Exitosa! Datos grabados vía Túnel.";
                 estado.style.color = "#3fb950";
                 document.getElementById('nombre').value = "";
                 document.getElementById('mensaje').value = "";
             }
-            
         } catch (err) {
-            // El navegador ni siquiera pudo enviar la petición
-            estado.innerText = "Error Crítico de Red: El navegador no puede contactar a Supabase. Verifica que estés en Incógnito y con 4G real.";
+            estado.innerText = "Fallo en el túnel: " + err.message;
             estado.style.color = "#f85149";
-            console.error("Fallo de red:", err);
+            console.error("Error de enlace:", err);
         } finally {
             btn.disabled = false;
         }
