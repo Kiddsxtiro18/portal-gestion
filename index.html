@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             background: #0d1117; 
             color: white; 
             display: flex; 
@@ -17,21 +17,21 @@
             height: 100vh; 
             margin: 0; 
         }
-        .matriz-contenedor { 
+        .contenedor-interfaz { 
             background: #161b22; 
-            padding: 30px; 
+            padding: 2rem; 
             border-radius: 12px; 
             border: 1px solid #30363d;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
             width: 90%;
-            max-width: 400px; 
+            max-width: 380px; 
             text-align: center; 
         }
-        h2 { color: #f06d06; margin-bottom: 20px; }
+        h2 { color: #f06d06; margin-top: 0; font-weight: 600; }
         input, textarea { 
             width: 100%; 
             padding: 12px; 
-            margin: 10px 0; 
+            margin: 8px 0; 
             border-radius: 6px; 
             border: 1px solid #30363d; 
             background: #010409; 
@@ -48,33 +48,35 @@
             color: white; 
             font-weight: bold; 
             cursor: pointer; 
-            transition: 0.3s; 
-            margin-top: 10px;
+            transition: all 0.2s; 
+            margin-top: 15px;
+            font-size: 1rem;
         }
-        button:hover { 
-            background: #ff8c00; 
-            box-shadow: 0 0 15px rgba(240, 109, 6, 0.4);
-        }
+        button:hover { background: #ff8c00; transform: translateY(-1px); }
+        button:disabled { background: #444; cursor: not-allowed; }
         #estado { 
-            font-size: 0.9em; 
-            margin-top: 20px; 
+            font-size: 0.85rem; 
+            margin-top: 1.5rem; 
             color: #8b949e; 
-            min-height: 20px;
+            line-height: 1.4;
+            padding: 10px;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
-<div class="matriz-contenedor">
+<div class="contenedor-interfaz">
     <h2>Verificación de Operador</h2>
     <input type="text" id="nombre" placeholder="Alias de Operador" autocomplete="off">
-    <textarea id="mensaje" placeholder="Mensaje para el Vacío" rows="3"></textarea>
+    <textarea id="mensaje" placeholder="Mensaje para la base de datos" rows="3"></textarea>
     <button id="enviar">Iniciar Sincronización</button>
-    <p id="estado"></p>
+    <p id="estado">Sistema en espera...</p>
 </div>
 
 <script>
-    // Configuración de los núcleos de Supabase
+    // Coordenadas del Vacío
     const URL_S = 'https://gvmwdqwkcacgzkfincz.supabase.co';
     const KEY_S = 'sb_publishable_N_hTBW7We2gtuT6b9xYgAA_trx0pI_w';
     const supabaseClient = supabase.createClient(URL_S, KEY_S);
@@ -83,34 +85,48 @@
         const estado = document.getElementById('estado');
         const btn = document.getElementById('enviar');
         
-        estado.innerText = "Estableciendo conexión con el Vacío...";
+        estado.innerText = "Intentando conexión directa con Supabase...";
+        estado.style.color = "#8b949e";
         btn.disabled = true;
 
         try {
-            // MANIOBRA DE DIAGNÓSTICO:
-            // Usamos un identificador fijo para saltar el firewall de la universidad
-            const ipSimulada = "Móvil_4G_Bypass"; 
-
+            // Recolección de entradas
             const n = document.getElementById('nombre').value;
             const m = document.getElementById('mensaje').value;
 
-            // Transmisión directa a la tabla 'visitas'
-            const { data, error } = await supabaseClient
+            if(!n || !m) {
+                estado.innerText = "Error: Completa todos los campos, Tenno.";
+                estado.style.color = "#f85149";
+                btn.disabled = false;
+                return;
+            }
+
+            // Maniobra sigilosa: Intentamos enviar los datos directamente.
+            // Si esto falla con "Failed to fetch", el bloqueo es a nivel de red (DNS/Firewall).
+            const { error, status } = await supabaseClient
                 .from('visitas')
                 .insert([{ 
-                    Usuario_input: n + " : " + m, 
-                    User_ip: ipSimulada 
+                    Usuario_input: `${n} - ${m}`, 
+                    User_ip: "Origen_Movil_4G" 
                 }]);
 
-            if (error) throw error;
-
-            estado.style.color = "#3fb950";
-            estado.innerText = "Transmisión exitosa. Rastro grabado en Supabase.";
+            if (error) {
+                // El servidor respondió, pero rechazó la entrada (posiblemente RLS)
+                estado.innerText = `Interferencia de Supabase: ${error.message} (Status: ${status})`;
+                estado.style.color = "#f85149";
+            } else {
+                // Éxito total
+                estado.innerText = "¡Sincronización exitosa! Datos grabados en el Vacío.";
+                estado.style.color = "#3fb950";
+                document.getElementById('nombre').value = "";
+                document.getElementById('mensaje').value = "";
+            }
             
         } catch (err) {
+            // El navegador ni siquiera pudo enviar la petición
+            estado.innerText = "Error Crítico de Red: El navegador no puede contactar a Supabase. Verifica que estés en Incógnito y con 4G real.";
             estado.style.color = "#f85149";
-            estado.innerText = "Fallo crítico en el enlace: " + err.message;
-            console.error(err);
+            console.error("Fallo de red:", err);
         } finally {
             btn.disabled = false;
         }
